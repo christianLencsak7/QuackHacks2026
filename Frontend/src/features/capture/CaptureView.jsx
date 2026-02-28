@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { UploadCloud, Image as ImageIcon, Terminal } from 'lucide-react';
 
-export default function CaptureView() {
+export default function CaptureView({ onExtractionComplete }) {
     const [logs, setLogs] = useState([
         "> INITIALIZING SYSTEM...",
         "> AWAITING IMAGE INPUT_"
@@ -17,8 +17,8 @@ export default function CaptureView() {
     }, [logs]);
 
     // Mock processing function
-    const handleDrop = (e) => {
-        e.preventDefault();
+    const startMockExtraction = (e) => {
+        if (e) e.preventDefault();
         setIsDragActive(false);
 
         setLogs(prev => [...prev, "> IMAGE DETECTED. ANALYZING IN 3..2..1.."]);
@@ -37,7 +37,27 @@ export default function CaptureView() {
         const interval = setInterval(() => {
             setLogs(prev => [...prev, mockSteps[step]]);
             step++;
-            if (step >= mockSteps.length) clearInterval(interval);
+            if (step >= mockSteps.length) {
+                clearInterval(interval);
+                setTimeout(() => {
+                    const mockData = {
+                        title: 'Team Sync',
+                        startDate: new Date().toISOString().split('T')[0],
+                        endDate: new Date().toISOString().split('T')[0],
+                        startTime: '14:00',
+                        endTime: '16:00',
+                        location: 'Room 304',
+                        typeTags: ['Meeting', 'Work'],
+                        cost: 'Free',
+                        host: 'Manager',
+                        notes: 'Please review the slide deck beforehand.',
+                        screenshotUrl: 'https://images.unsplash.com/photo-1506784983877-45594efa4cbe?auto=format&fit=crop&q=80&w=400'
+                    };
+                    if (onExtractionComplete) {
+                        onExtractionComplete(mockData);
+                    }
+                }, 1000);
+            }
         }, 800);
     };
 
@@ -58,8 +78,9 @@ export default function CaptureView() {
             <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Dropzone Area (2/3 width on desktop) */}
                 <div
-                    className={`lg:col-span-2 border-2 border-dashed rounded-xl ${isDragActive ? 'border-blue-500 bg-blue-50' : 'border-slate-300 bg-white'} flex flex-col items-center justify-center transition-colors relative`}
-                    onDrop={handleDrop}
+                    className={`lg:col-span-2 border-2 border-dashed rounded-xl ${isDragActive ? 'border-blue-500 bg-blue-50' : 'border-slate-300 bg-white'} flex flex-col items-center justify-center transition-colors relative cursor-pointer`}
+                    onClick={startMockExtraction}
+                    onDrop={startMockExtraction}
                     onDragOver={handleDragOver}
                     onDragLeave={() => setIsDragActive(false)}
                 >
