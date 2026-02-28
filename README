@@ -1,0 +1,10 @@
+Project:
+Insta Post → Screenshot → Share → Send it to our app → Goes to app → Something will parse it (Some sort of LLM) → Any parts not filled out, you fill out yourself → Block on calendar → Notify you based on your calendar in your app 
+
+Tech Stack:
+Web Server - Vercel
+LLM - Snowlack / Featherless 
+Front End - Node.js, react
+Backend - Python (collect data about emails, passwords, info about them) , SUPA base? 
+
+Styling:
