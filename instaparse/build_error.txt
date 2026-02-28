@@ -1,0 +1,157 @@
+﻿
+> instaparse@0.0.0 build
+> vite build
+
+[36mvite v7.3.1 [32mbuilding client environment for production...[36m[39m
+transforming...
+node.exe : Error: Cannot 
+apply unknown utility 
+class `bg-black`. Are you 
+using CSS modules or 
+similar and missing 
+`@reference`? https://tail
+windcss.com/docs/functions
+-and-directives#reference-
+directive
+At C:\Program 
+Files\nodejs\npm.ps1:29 
+char:3
++   & $NODE_EXE 
+$NPM_CLI_JS $args
++   ~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~
+    + CategoryInfo        
+      : NotSpecified: (E  
+  rror: Cannot a...renc   
+ e-directive:String) [    
+], RemoteException
+    + FullyQualifiedError 
+   Id : NativeCommandErr  
+  or
+ 
+    at onInvalidCandidate 
+(C:\Users\clenc\OneDrive\Q
+uackHacks2026\instaparse\n
+ode_modules\tailwindcss\di
+st\lib.js:21:1314)
+    at Ee (C:\Users\clenc\
+OneDrive\QuackHacks2026\in
+staparse\node_modules\tail
+windcss\dist\lib.js:16:370
+66)
+    at C:\Users\clenc\OneD
+rive\QuackHacks2026\instap
+arse\node_modules\tailwind
+css\dist\lib.js:21:355
+    at Pr (C:\Users\clenc\
+OneDrive\QuackHacks2026\in
+staparse\node_modules\tail
+windcss\dist\lib.js:3:1733
+)
+    at _ (C:\Users\clenc\O
+neDrive\QuackHacks2026\ins
+taparse\node_modules\tailw
+indcss\dist\lib.js:3:1377)
+    at Te (C:\Users\clenc\
+OneDrive\QuackHacks2026\in
+staparse\node_modules\tail
+windcss\dist\lib.js:21:172
+)
+    at pn (C:\Users\clenc\
+OneDrive\QuackHacks2026\in
+staparse\node_modules\tail
+windcss\dist\lib.js:38:294
+)
+    at async dn (C:\Users\
+clenc\OneDrive\QuackHacks2
+026\instaparse\node_module
+s\tailwindcss\dist\lib.js:
+38:631)
+    at async Xr (C:\Users\
+clenc\OneDrive\QuackHacks2
+026\instaparse\node_module
+s\@tailwindcss\node\dist\i
+ndex.js:10:3417)
+    at async N (C:\Users\c
+lenc\OneDrive\QuackHacks20
+26\instaparse\node_modules
+\@tailwindcss\postcss\dist
+\index.js:10:3979)
+[32mΓ£ô[39m 20 modules transformed.
+[31mΓ£ù[39m Build 
+failed in 3.03s
+[31merror during build:
+[31m[vite:css] [postcss] 
+tailwindcss: C:/Users/clen
+c/OneDrive/QuackHacks2026/
+instaparse/src/index.css:1
+:1: Cannot apply unknown 
+utility class `bg-black`. 
+Are you using CSS modules 
+or similar and missing 
+`@reference`? https://tail
+windcss.com/docs/functions
+-and-directives#reference-
+directive[31m
+file: [36mC:/Users/clenc/
+OneDrive/QuackHacks2026/in
+staparse/src/index.css:1:0
+[31m
+    at Input.error (C:\Use
+rs\clenc\OneDrive\QuackHac
+ks2026\instaparse\node_mod
+ules\postcss\lib\input.js:
+135:16)
+    at Root.error (C:\User
+s\clenc\OneDrive\QuackHack
+s2026\instaparse\node_modu
+les\postcss\lib\node.js:14
+6:32)
+    at Object.Once (C:\Use
+rs\clenc\OneDrive\QuackHac
+ks2026\instaparse\node_mod
+ules\@tailwindcss\postcss\
+dist\index.js:10:6913)
+    at async 
+LazyResult.runAsync (C:\Us
+ers\clenc\OneDrive\QuackHa
+cks2026\instaparse\node_mo
+dules\postcss\lib\lazy-res
+ult.js:293:11)
+    at async runPostCSS (f
+ile:///C:/Users/clenc/OneD
+rive/QuackHacks2026/instap
+arse/node_modules/vite/dis
+t/node/chunks/config.js:30
+145:19)
+    at async 
+compilePostCSS (file:///C:
+/Users/clenc/OneDrive/Quac
+kHacks2026/instaparse/node
+_modules/vite/dist/node/ch
+unks/config.js:30129:6)
+    at async compileCSS (f
+ile:///C:/Users/clenc/OneD
+rive/QuackHacks2026/instap
+arse/node_modules/vite/dis
+t/node/chunks/config.js:30
+059:26)
+    at async 
+Object.handler (file:///C:
+/Users/clenc/OneDrive/Quac
+kHacks2026/instaparse/node
+_modules/vite/dist/node/ch
+unks/config.js:29592:54)
+    at async transform (fi
+le:///C:/Users/clenc/OneDr
+ive/QuackHacks2026/instapa
+rse/node_modules/rollup/di
+st/es/shared/node-entry.js
+:21269:16)
+    at async ModuleLoader.
+addModuleSource (file:///C
+:/Users/clenc/OneDrive/Qua
+ckHacks2026/instaparse/nod
+e_modules/rollup/dist/es/s
+hared/node-entry.js:21497:
+36)[39m
