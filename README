@@ -3,7 +3,7 @@ Insta Post → Screenshot → Share → Send it to our app → Goes to app → S
 
 Tech Stack:
 Web Server - Vercel
-LLM - Snowlack / Featherless 
+LLM - Snowflake / Featherless 
 Front End - Node.js, react
 Backend - Python (collect data about emails, passwords, info about them) , SUPA base? 
 
