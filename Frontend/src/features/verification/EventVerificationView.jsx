@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Calendar, MapPin, Tag, DollarSign, User, FileText, Check, X, Image as ImageIcon } from 'lucide-react';
+import { Calendar, MapPin, Tag, DollarSign, User, FileText, Check, X, Image as ImageIcon, AlertCircle } from 'lucide-react';
 
 export default function EventVerificationView({ initialData, onApprove, onCancel }) {
     const [formData, setFormData] = useState({
@@ -13,11 +13,32 @@ export default function EventVerificationView({ initialData, onApprove, onCancel
         cost: initialData?.cost || '',
         host: initialData?.host || '',
         notes: initialData?.notes || '',
-        screenshotUrl: initialData?.screenshotUrl || null
+        screenshotUrl: initialData?.screenshotUrl || null,
     });
 
+    const [errors, setErrors] = useState({});
     const [newTag, setNewTag] = useState('');
     const [isScreenshotExpanded, setIsScreenshotExpanded] = useState(false);
+
+    const validate = () => {
+        const errs = {};
+        if (!formData.title?.trim())
+            errs.title = 'Event title is required.';
+        if (!formData.startDate)
+            errs.startDate = 'Start date is required.';
+        if (formData.startDate && formData.endDate && formData.endDate < formData.startDate)
+            errs.endDate = 'End date must be on or after start date.';
+        if (formData.startDate === formData.endDate && formData.startTime && formData.endTime && formData.endTime <= formData.startTime)
+            errs.endTime = 'End time must be after start time.';
+        return errs;
+    };
+
+    const handleApprove = () => {
+        const errs = validate();
+        if (Object.keys(errs).length > 0) { setErrors(errs); return; }
+        setErrors({});
+        onApprove(formData);
+    };
 
     const PRESET_TAGS = ['Concert', 'Date', 'Sports', 'Party', 'Meeting', 'Work', 'Class', 'Other'];
 
@@ -68,7 +89,7 @@ export default function EventVerificationView({ initialData, onApprove, onCancel
                         <X size={16} /> Cancel
                     </button>
                     <button
-                        onClick={() => onApprove(formData)}
+                        onClick={handleApprove}
                         className="px-6 py-2.5 flex items-center gap-2 text-white bg-blue-600 hover:bg-blue-700 rounded-full transition-colors font-semibold text-sm shadow-sm"
                     >
                         <Check size={16} /> Approve
@@ -88,10 +109,11 @@ export default function EventVerificationView({ initialData, onApprove, onCancel
                                     type="text"
                                     name="title"
                                     value={formData.title}
-                                    onChange={handleChange}
-                                    className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-900 font-medium text-lg placeholder-slate-400"
+                                    onChange={e => { handleChange(e); if (errors.title) setErrors(p => ({ ...p, title: null })); }}
+                                    className={`w-full bg-slate-50 border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:border-transparent text-slate-900 font-medium text-lg placeholder-slate-400 ${errors.title ? 'border-red-400 focus:ring-red-300' : 'border-slate-200 focus:ring-blue-500'}`}
                                     placeholder="e.g. QuackHacks 2026 Pitch"
                                 />
+                                {errors.title && <p className="flex items-center gap-1 text-red-500 text-xs mt-1"><AlertCircle size={12} /> {errors.title}</p>}
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -104,9 +126,10 @@ export default function EventVerificationView({ initialData, onApprove, onCancel
                                         type="date"
                                         name="startDate"
                                         value={formData.startDate}
-                                        onChange={handleChange}
-                                        className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        onChange={e => { handleChange(e); if (errors.startDate) setErrors(p => ({ ...p, startDate: null })); }}
+                                        className={`w-full bg-slate-50 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.startDate ? 'border-red-400' : 'border-slate-200'}`}
                                     />
+                                    {errors.startDate && <p className="flex items-center gap-1 text-red-500 text-xs mt-1"><AlertCircle size={12} /> {errors.startDate}</p>}
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 mb-1 flex items-center gap-2">
@@ -116,9 +139,10 @@ export default function EventVerificationView({ initialData, onApprove, onCancel
                                         type="date"
                                         name="endDate"
                                         value={formData.endDate}
-                                        onChange={handleChange}
-                                        className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-500"
+                                        onChange={e => { handleChange(e); if (errors.endDate) setErrors(p => ({ ...p, endDate: null })); }}
+                                        className={`w-full bg-slate-50 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.endDate ? 'border-red-400' : 'border-slate-200 text-slate-500'}`}
                                     />
+                                    {errors.endDate && <p className="flex items-center gap-1 text-red-500 text-xs mt-1"><AlertCircle size={12} /> {errors.endDate}</p>}
                                 </div>
 
                                 {/* Times */}
@@ -138,10 +162,11 @@ export default function EventVerificationView({ initialData, onApprove, onCancel
                                         type="time"
                                         name="endTime"
                                         value={formData.endTime}
-                                        onChange={handleChange}
-                                        className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-500"
+                                        onChange={e => { handleChange(e); if (errors.endTime) setErrors(p => ({ ...p, endTime: null })); }}
+                                        className={`w-full bg-slate-50 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.endTime ? 'border-red-400' : 'border-slate-200 text-slate-500'}`}
                                         placeholder="Default 2 hrs"
                                     />
+                                    {errors.endTime && <p className="flex items-center gap-1 text-red-500 text-xs mt-1"><AlertCircle size={12} /> {errors.endTime}</p>}
                                 </div>
                             </div>
 

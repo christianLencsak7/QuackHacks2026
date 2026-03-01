@@ -26,8 +26,8 @@ export async function GET(request) {
         const mappedEvents = data.map(evt => ({
             id: evt.id,
             title: evt.title,
-            date: evt.start_date ? parseInt(evt.start_date.split('-')[2], 10) : null, // Frontend uses int date currently
             start_date: evt.start_date,
+            end_date: evt.end_date ?? null,
             time: evt.start_time,
             type: evt.event_type,
             fullData: {}

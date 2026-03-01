@@ -4,7 +4,24 @@ import EventDetailModal from '../../components/EventDetailModal';
 
 const DAYS_OF_WEEK = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-export default function ScheduleView({ events = [], onUpdateEvent }) {
+const EVENT_TITLE_SUGGESTIONS = [
+    '🎉 Epic Hangout',
+    '☕ Coffee Catch-up',
+    '🚀 Brainstorm Session',
+    '🎸 Band Practice',
+    '🏃 Morning Run',
+    '📚 Study Grind',
+    '🍕 Pizza Night',
+    '🎬 Movie Marathon',
+    '🧠 Deep Work Block',
+    '🌮 Taco Tuesday',
+    '🏋️ Gym Session',
+    '🎮 Game Night',
+];
+const randomEventTitle = () =>
+    EVENT_TITLE_SUGGESTIONS[Math.floor(Math.random() * EVENT_TITLE_SUGGESTIONS.length)];
+
+export default function ScheduleView({ events = [], onUpdateEvent, onDeleteEvent }) {
     const today = new Date();
     const [viewDate, setViewDate] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
     const [selectedEvent, setSelectedEvent] = useState(null);
@@ -20,6 +37,13 @@ export default function ScheduleView({ events = [], onUpdateEvent }) {
     const startOffset = new Date(year, month, 1).getDay();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
 
+    // Parse an ISO date string to a local Date (noon, avoids DST shifts)
+    const isoToDate = (iso) => {
+        if (!iso) return null;
+        const [y, m, d] = iso.split('-').map(Number);
+        return new Date(y, m - 1, d, 12);
+    };
+
     // Build calendar grid (enough rows to show the full month)
     const totalCells = Math.ceil((startOffset + daysInMonth) / 7) * 7;
     const calendarDays = Array.from({ length: totalCells }, (_, i) => {
@@ -31,8 +55,26 @@ export default function ScheduleView({ events = [], onUpdateEvent }) {
             month === today.getMonth() &&
             year === today.getFullYear();
 
-        // Match events that fall on this day (events store day-of-month as `date`)
-        const dayEvents = isCurrentMonth ? events.filter(e => e.date === dayNumber) : [];
+        // Match events whose date range includes this day
+        const isoDate = isCurrentMonth
+            ? `${year}-${String(month + 1).padStart(2, '0')}-${String(dayNumber).padStart(2, '0')}`
+            : null;
+
+        const dayEvents = isCurrentMonth
+            ? events
+                .filter(e => {
+                    const start = e.start_date;
+                    const end = e.end_date || e.start_date;
+                    if (!start) return false;
+                    return isoDate >= start && isoDate <= end;
+                })
+                .map(e => ({
+                    ...e,
+                    _isStart: isoDate === e.start_date,
+                    _isEnd: isoDate === (e.end_date || e.start_date),
+                    _isMultiDay: !!(e.end_date && e.end_date !== e.start_date),
+                }))
+            : [];
 
         return { dayNumber, isCurrentMonth, isToday, events: dayEvents };
     });
@@ -111,18 +153,27 @@ export default function ScheduleView({ events = [], onUpdateEvent }) {
                             </div>
 
                             <div className="flex-1 flex flex-col gap-1 overflow-y-auto no-scrollbar">
-                                {day.events.map(event => (
-                                    <div
-                                        key={event.id}
-                                        onClick={(e) => { e.stopPropagation(); setSelectedEvent(event); }}
-                                        className="text-[9px] md:text-xs p-1 md:px-2 md:py-1 rounded bg-blue-50 border border-blue-100 text-blue-700 truncate font-medium flex items-center gap-1 cursor-pointer hover:bg-blue-100 hover:border-blue-200 transition-colors"
-                                        title={`${event.time} - ${event.title}`}
-                                    >
-                                        <div className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0 md:hidden" />
-                                        <span className="opacity-70 font-mono hidden md:inline shrink-0">{event.time}</span>
-                                        <span className="truncate">{event.title}</span>
-                                    </div>
-                                ))}
+                                {day.events.map(event => {
+                                    const isContinuation = event._isMultiDay && !event._isStart;
+                                    return (
+                                        <div
+                                            key={event.id + day.dayNumber}
+                                            onClick={(e) => { e.stopPropagation(); setSelectedEvent(event); }}
+                                            className={`text-[9px] md:text-xs p-1 md:px-2 md:py-1 truncate font-medium flex items-center gap-1 cursor-pointer transition-colors ${isContinuation
+                                                    ? 'bg-blue-100 border border-blue-200 text-blue-600 rounded-r-full opacity-80 hover:opacity-100'
+                                                    : 'rounded bg-blue-50 border border-blue-100 text-blue-700 hover:bg-blue-100 hover:border-blue-200'
+                                                }`}
+                                            title={`${event.start_date}${event.end_date && event.end_date !== event.start_date ? ' → ' + event.end_date : ''} ${event.time || ''} - ${event.title}`}
+                                        >
+                                            {isContinuation
+                                                ? <span className="opacity-60 hidden md:inline shrink-0">→</span>
+                                                : <div className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0 md:hidden" />
+                                            }
+                                            {!isContinuation && <span className="opacity-70 font-mono hidden md:inline shrink-0">{event.time}</span>}
+                                            <span className="truncate">{event.title}</span>
+                                        </div>
+                                    );
+                                })}
                             </div>
                         </div>
                     ))}
@@ -133,6 +184,7 @@ export default function ScheduleView({ events = [], onUpdateEvent }) {
                 <EventDetailModal
                     event={selectedEvent}
                     onClose={() => setSelectedEvent(null)}
+                    onDelete={onDeleteEvent}
                     onSave={(updated) => {
                         if (onUpdateEvent) onUpdateEvent(updated);
                         setSelectedEvent(null);
@@ -144,8 +196,7 @@ export default function ScheduleView({ events = [], onUpdateEvent }) {
                 <EventDetailModal
                     event={{
                         isNew: true,
-                        title: 'New Event',
-                        date: createDate ? createDate.getDate() : today.getDate(),
+                        title: randomEventTitle(),
                         start_date: createDate ? createDate.toISOString().split('T')[0] : today.toISOString().split('T')[0],
                         start_time: '12:00',
                         end_time: '13:00',

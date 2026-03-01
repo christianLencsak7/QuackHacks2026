@@ -93,33 +93,74 @@ function App() {
   };
 
   const handleApproveEvent = async (finalData) => {
+    // Normalise: verification form sends camelCase; API + DB expect snake_case.
+    const payload = {
+      title: finalData.title,
+      start_date: finalData.start_date ?? finalData.startDate ?? null,
+      end_date: finalData.end_date ?? finalData.endDate ?? null,
+      start_time: finalData.start_time ?? finalData.startTime ?? null,
+      end_time: finalData.end_time ?? finalData.endTime ?? null,
+      location: finalData.location ?? null,
+      event_type: finalData.event_type ?? finalData.typeTags?.[0] ?? 'Custom',
+      notes: finalData.notes ?? null,
+      host: finalData.host ?? null,
+      cost: finalData.cost ?? null,
+    };
+
+    // ── Client-side validation ──────────────────────────────────────────────
+    if (!payload.title?.trim()) {
+      alert('Please enter an event title before saving.');
+      return;
+    }
+    if (!payload.start_date) {
+      alert('Please set a start date before saving.');
+      return;
+    }
+    const isoRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!isoRegex.test(payload.start_date)) {
+      alert(`Invalid start date format "${payload.start_date}". Please use YYYY-MM-DD.`);
+      return;
+    }
+    if (payload.end_date && !isoRegex.test(payload.end_date)) {
+      alert(`Invalid end date format "${payload.end_date}". Please use YYYY-MM-DD.`);
+      return;
+    }
+    if (payload.end_date && payload.end_date < payload.start_date) {
+      alert('End date cannot be before start date.');
+      return;
+    }
+    // ───────────────────────────────────────────────────────────────────────
+
     try {
       const res = await fetch('/api/create_event', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(finalData)
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
 
       if (data.event) {
-        // Map the newly returned DB event back to the frontend's expected shape
         const newEvent = {
           id: data.event.id,
           title: data.event.title,
           time: data.event.start_time,
           type: data.event.event_type,
-          date: data.event.start_date ? parseInt(data.event.start_date.split('-')[2], 10) : null,
           start_date: data.event.start_date,
-          fullData: finalData
+          end_date: data.event.end_date,
+          fullData: { ...finalData, ...payload },
         };
         setEvents(prev => [...prev, newEvent]);
+        setPendingEventData(null);
+        setCurrentView('schedule');
+      } else {
+        console.error('[handleApproveEvent] API error:', data);
+        alert(`Could not save event: ${data.error || 'Unknown error'}`);
+        // Stay on the verification screen so the user can fix it
       }
     } catch (err) {
       console.error('Failed to save event:', err);
+      alert('Network error — could not save event. Please try again.');
     }
-
-    setPendingEventData(null);
-    setCurrentView('schedule');
   };
 
   const handleCancelVerification = () => {
@@ -127,7 +168,7 @@ function App() {
     setCurrentView('capture');
   };
 
-  const handleUpdateEvent = (updatedEvent) => {
+  const handleUpdateEvent = async (updatedEvent) => {
     if (updatedEvent.isNew) {
       // It's a brand new event created manually from the schedule
       handleApproveEvent({
@@ -143,9 +184,38 @@ function App() {
       return;
     }
 
-    // Otherwise it's just an edit to an existing frontend state event.
-    // Ideally this should trigger a DB update too, but sticking to existing logic for now.
+    // Optimistically update UI immediately
     setEvents(prev => prev.map(e => e.id === updatedEvent.id ? updatedEvent : e));
+
+    // Persist the date (and other field) changes to the DB
+    try {
+      await fetch(`/api/events/${updatedEvent.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: updatedEvent.title,
+          start_date: updatedEvent.start_date,
+          end_date: updatedEvent.end_date,
+          start_time: updatedEvent.time || updatedEvent.start_time,
+          end_time: updatedEvent.fullData?.endTime || updatedEvent.end_time || '',
+          location: updatedEvent.fullData?.location || updatedEvent.location || '',
+          event_type: updatedEvent.type || updatedEvent.event_type || '',
+        }),
+      });
+    } catch (err) {
+      console.error('Failed to update event on server:', err);
+    }
+  };
+
+  const handleDeleteEvent = async (eventToDelete) => {
+    // Optimistically remove from UI immediately
+    setEvents(prev => prev.filter(e => e.id !== eventToDelete.id));
+    // Best-effort DELETE to backend
+    try {
+      await fetch(`/api/events/${eventToDelete.id}`, { method: 'DELETE' });
+    } catch (err) {
+      console.error('Failed to delete event from server:', err);
+    }
   };
 
   return (
@@ -170,8 +240,8 @@ function App() {
             onCancel={handleCancelVerification}
           />
         )}
-        {currentView === 'schedule' && <ScheduleView events={events} onUpdateEvent={handleUpdateEvent} />}
-        {currentView === 'list' && <EventListView events={events} onUpdateEvent={handleUpdateEvent} />}
+        {currentView === 'schedule' && <ScheduleView events={events} onUpdateEvent={handleUpdateEvent} onDeleteEvent={handleDeleteEvent} />}
+        {currentView === 'list' && <EventListView events={events} onUpdateEvent={handleUpdateEvent} onDeleteEvent={handleDeleteEvent} />}
       </main>
     </div>
   );

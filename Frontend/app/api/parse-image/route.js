@@ -21,11 +21,13 @@ export async function POST(request) {
 
         const prompt = `You are an expert event detail extractor. Look at this screenshot and extract any event information you can find.
 
+IMPORTANT: The current year is 2026. If a date is shown without a year, assume 2026. If a date shows only a month and day (e.g. "March 15" or "3/15"), format it as 2026-MM-DD.
+
 Return ONLY a valid JSON object with exactly these fields (use null for any field not found):
 {
   "title": "String - name of the event",
-  "startDate": "YYYY-MM-DD or null",
-  "endDate": "YYYY-MM-DD or null",
+  "startDate": "YYYY-MM-DD format, default year 2026 if unclear, or null if no date found",
+  "endDate": "YYYY-MM-DD format, default year 2026 if unclear, or null",
   "startTime": "HH:MM in 24hr format or null",
   "endTime": "HH:MM in 24hr format or null",
   "location": "String or null",
