@@ -1,4 +1,5 @@
 import './globals.css';
+import ServiceWorkerRegistration from './ServiceWorkerRegistration';
 
 export const metadata = {
     title: 'instaparse',
@@ -21,6 +22,7 @@ export default function RootLayout({ children }) {
     return (
         <html lang="en">
             <body>
+                <ServiceWorkerRegistration />
                 <div id="root">{children}</div>
             </body>
         </html>
