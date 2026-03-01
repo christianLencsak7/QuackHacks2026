@@ -1,8 +1,6 @@
 // Plain service worker — no build step, no bundling dependencies
 // Intercepts the Web Share Target POST from iOS/Android share sheet
 
-const CACHE_NAME = 'instaparse-v1';
-
 console.log('[SW] Service worker script loaded');
 
 self.addEventListener('install', (event) => {
@@ -53,30 +51,32 @@ function saveImageToIDB(file) {
     });
 }
 
-// Log ALL fetch events so we can see what the SW intercepts
+// Log ALL fetch requests so we can see exactly what the SW intercepts
 self.addEventListener('fetch', (event) => {
     const { method, url } = event.request;
+    const pathname = new URL(url).pathname;
 
-    // Only log non-asset requests to avoid noise
-    if (!url.includes('/_next') && !url.includes('/static') && !url.match(/\.(js|css|png|svg|ico|woff)$/)) {
-        console.log(`[SW] Fetch intercepted: ${method} ${url}`);
-    }
+    // Log every single request (remove this after debugging)
+    console.log(`[SW] FETCH: ${method} ${pathname}`);
 
-    if (method === 'POST' && url.endsWith('/share-target')) {
-        console.log('[SW] 🎯 Share target POST detected!');
+    if (method === 'POST' && pathname === '/share-target') {
+        console.log('[SW] 🎯 Share target POST detected! Handling...');
         event.respondWith(
             (async () => {
                 try {
                     const formData = await event.request.formData();
-                    console.log('[SW] FormData keys:', [...formData.keys()]);
+                    const allKeys = [...formData.keys()];
+                    console.log('[SW] FormData keys:', allKeys);
 
-                    const files = formData.getAll('media');
+                    // Try both 'media' and 'files' in case iOS sends a different field name
+                    const files = formData.getAll('media').concat(formData.getAll('files'));
                     console.log('[SW] Files received:', files.length, files.map(f => `${f.name} (${f.type}, ${f.size}b)`));
 
                     if (files && files.length > 0) {
                         await saveImageToIDB(files[0]);
                     } else {
-                        console.warn('[SW] No files found in share formData');
+                        console.warn('[SW] ⚠️ No files found under "media" or "files" keys');
+                        console.log('[SW] Full formData entries:', allKeys.map(k => `${k}=${formData.get(k)}`));
                     }
 
                     console.log('[SW] Redirecting to /?shared=true');
