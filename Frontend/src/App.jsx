@@ -8,9 +8,13 @@ import EventListView from './features/schedule/EventListView';
 
 // Read and delete the shared image from native IndexedDB (written by sw.js)
 function getAndClearSharedImage() {
+  console.log('[App] Checking IndexedDB for shared image...');
   return new Promise((resolve) => {
     const req = indexedDB.open('instaparse-share', 1);
-    req.onupgradeneeded = (e) => e.target.result.createObjectStore('images');
+    req.onupgradeneeded = (e) => {
+      console.log('[App] IndexedDB upgrade — creating images store');
+      e.target.result.createObjectStore('images');
+    };
     req.onsuccess = (e) => {
       const db = e.target.result;
       const tx = db.transaction('images', 'readwrite');
@@ -18,14 +22,26 @@ function getAndClearSharedImage() {
       const getReq = store.get('shared-image');
       getReq.onsuccess = () => {
         const file = getReq.result;
-        if (file) store.delete('shared-image');
+        if (file) {
+          console.log('[App] ✅ Found shared image in IndexedDB:', file.name, file.type, file.size + 'b');
+          store.delete('shared-image');
+        } else {
+          console.log('[App] No shared image found in IndexedDB');
+        }
         resolve(file || null);
       };
-      getReq.onerror = () => resolve(null);
+      getReq.onerror = () => {
+        console.error('[App] IndexedDB get error:', getReq.error);
+        resolve(null);
+      };
     };
-    req.onerror = () => resolve(null);
+    req.onerror = () => {
+      console.error('[App] IndexedDB open error:', req.error);
+      resolve(null);
+    };
   });
 }
+
 
 
 // Initial Mock Events Lifted from ScheduleView
