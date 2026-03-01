@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { X, MapPin, Clock, Tag, DollarSign, User, FileText, Calendar, Pencil, Check, AlertCircle } from 'lucide-react';
-
 export default function EventDetailModal({ event, onClose, onSave }) {
     const [editing, setEditing] = useState(false);
     const [form, setForm] = useState(null);
@@ -74,44 +73,6 @@ export default function EventDetailModal({ event, onClose, onSave }) {
         if (errors[field]) setErrors(prev => { const n = { ...prev }; delete n[field]; return n; });
     };
 
-    const inputCls = (field) =>
-        `w-full text-sm text-slate-900 bg-slate-50 border rounded-lg px-2 py-1 focus:outline-none focus:ring-2 ${errors[field] ? 'border-red-400 focus:ring-red-300' : 'border-slate-200 focus:ring-blue-500'}`;
-
-    const Field = ({ icon: Icon, label, value, field, multiline, required }) => (
-        <div className="flex items-start gap-3 py-2.5 border-b border-slate-100 last:border-0">
-            <Icon size={16} className="text-slate-400 mt-0.5 shrink-0" />
-            <div className="flex-1 min-w-0">
-                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-0.5">
-                    {label}{required && editing && <span className="text-red-400 ml-0.5">*</span>}
-                </p>
-                {editing && field ? (
-                    <>
-                        {multiline ? (
-                            <textarea
-                                className={inputCls(field) + ' resize-none'}
-                                rows={3}
-                                value={form[field]}
-                                onChange={set(field)}
-                            />
-                        ) : (
-                            <input
-                                className={inputCls(field)}
-                                value={form[field]}
-                                onChange={set(field)}
-                            />
-                        )}
-                        {errors[field] && (
-                            <p className="flex items-center gap-1 text-red-500 text-xs mt-1">
-                                <AlertCircle size={11} /> {errors[field]}
-                            </p>
-                        )}
-                    </>
-                ) : (
-                    <p className="text-sm text-slate-800 break-words">{value || <span className="text-slate-300 italic">—</span>}</p>
-                )}
-            </div>
-        </div>
-    );
 
     return (
         <div
@@ -128,7 +89,7 @@ export default function EventDetailModal({ event, onClose, onSave }) {
                         {editing ? (
                             <div>
                                 <input
-                                    className={inputCls('title') + ' text-lg font-bold'}
+                                    className={`w-full text-lg font-bold text-slate-900 bg-slate-50 border rounded-lg px-2 py-1 focus:outline-none focus:ring-2 ${errors.title ? 'border-red-400 focus:ring-red-300' : 'border-slate-200 focus:ring-blue-500'}`}
                                     placeholder="Event title *"
                                     value={form.title}
                                     onChange={set('title')}
@@ -177,19 +138,20 @@ export default function EventDetailModal({ event, onClose, onSave }) {
 
                 {/* Body */}
                 <div className="flex-1 overflow-y-auto px-5 py-2">
-                    <Field icon={Calendar} label="Date" value={`Day ${form.date}`} field={null} />
-                    <Field icon={Clock} label="Start Time" value={form.time} field="time" />
-                    <Field icon={Clock} label="End Time" value={form.endTime} field="endTime" />
-                    <Field icon={MapPin} label="Location" value={form.location} field="location" />
-                    <Field icon={User} label="Host" value={form.host} field="host" />
-                    <Field icon={DollarSign} label="Cost" value={form.cost} field="cost" />
+                    <Field form={form} editing={editing} errors={errors} set={set} icon={Calendar} label="Date" value={`Day ${form.date}`} field={null} />
+                    <Field form={form} editing={editing} errors={errors} set={set} icon={Clock} label="Start Time" value={form.time} field="time" />
+                    <Field form={form} editing={editing} errors={errors} set={set} icon={Clock} label="End Time" value={form.endTime} field="endTime" />
+                    <Field form={form} editing={editing} errors={errors} set={set} icon={MapPin} label="Location" value={form.location} field="location" />
+                    <Field form={form} editing={editing} errors={errors} set={set} icon={User} label="Host" value={form.host} field="host" />
+                    <Field form={form} editing={editing} errors={errors} set={set} icon={DollarSign} label="Cost" value={form.cost} field="cost" />
                     <Field
+                        form={form} editing={editing} errors={errors} set={set}
                         icon={Tag}
                         label="Tags"
                         value={Array.isArray(form.typeTags) ? form.typeTags.join(', ') : form.typeTags}
                         field={null}
                     />
-                    <Field icon={FileText} label="Notes" value={form.notes} field="notes" multiline />
+                    <Field form={form} editing={editing} errors={errors} set={set} icon={FileText} label="Notes" value={form.notes} field="notes" multiline />
                 </div>
 
                 {/* Footer */}
