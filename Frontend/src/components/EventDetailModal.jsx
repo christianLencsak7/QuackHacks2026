@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { X, MapPin, Clock, Tag, DollarSign, User, FileText, Calendar, Pencil, Check } from 'lucide-react';
+import { X, MapPin, Clock, Tag, DollarSign, User, FileText, Calendar, Pencil, Check, AlertCircle } from 'lucide-react';
 
 export default function EventDetailModal({ event, onClose, onSave }) {
     const [editing, setEditing] = useState(false);
     const [form, setForm] = useState(null);
+    const [errors, setErrors] = useState({});
 
     useEffect(() => {
         if (event) {
@@ -20,12 +21,34 @@ export default function EventDetailModal({ event, onClose, onSave }) {
                 type: event.type || '',
             });
             setEditing(false);
+            setErrors({});
         }
     }, [event]);
 
     if (!event || !form) return null;
 
+    const validate = () => {
+        const errs = {};
+        if (!form.title?.trim())
+            errs.title = 'Title is required.';
+        if (form.time && !/^\d{2}:\d{2}$/.test(form.time))
+            errs.time = 'Use HH:MM format (e.g. 14:30).';
+        if (form.endTime && !/^\d{2}:\d{2}$/.test(form.endTime))
+            errs.endTime = 'Use HH:MM format (e.g. 15:30).';
+        if (form.time && form.endTime && form.endTime <= form.time)
+            errs.endTime = 'End time must be after start time.';
+        if (form.cost && form.cost.trim() !== '' && !/^(free|Free|\$[\d]+.*|\d+.*)$/i.test(form.cost.trim()))
+            errs.cost = 'Use "Free", "$20", etc.';
+        return errs;
+    };
+
     const handleSave = () => {
+        const errs = validate();
+        if (Object.keys(errs).length > 0) {
+            setErrors(errs);
+            return;
+        }
+        setErrors({});
         const updated = {
             ...event,
             title: form.title,
@@ -45,26 +68,44 @@ export default function EventDetailModal({ event, onClose, onSave }) {
         setEditing(false);
     };
 
-    const Field = ({ icon: Icon, label, value, field, multiline }) => (
+    const set = (field) => (e) => {
+        setForm(f => ({ ...f, [field]: e.target.value }));
+        // Clear error for field when user starts typing
+        if (errors[field]) setErrors(prev => { const n = { ...prev }; delete n[field]; return n; });
+    };
+
+    const inputCls = (field) =>
+        `w-full text-sm text-slate-900 bg-slate-50 border rounded-lg px-2 py-1 focus:outline-none focus:ring-2 ${errors[field] ? 'border-red-400 focus:ring-red-300' : 'border-slate-200 focus:ring-blue-500'}`;
+
+    const Field = ({ icon: Icon, label, value, field, multiline, required }) => (
         <div className="flex items-start gap-3 py-2.5 border-b border-slate-100 last:border-0">
             <Icon size={16} className="text-slate-400 mt-0.5 shrink-0" />
             <div className="flex-1 min-w-0">
-                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-0.5">{label}</p>
+                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-0.5">
+                    {label}{required && editing && <span className="text-red-400 ml-0.5">*</span>}
+                </p>
                 {editing && field ? (
-                    multiline ? (
-                        <textarea
-                            className="w-full text-sm text-slate-900 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            rows={3}
-                            value={form[field]}
-                            onChange={e => setForm(f => ({ ...f, [field]: e.target.value }))}
-                        />
-                    ) : (
-                        <input
-                            className="w-full text-sm text-slate-900 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            value={form[field]}
-                            onChange={e => setForm(f => ({ ...f, [field]: e.target.value }))}
-                        />
-                    )
+                    <>
+                        {multiline ? (
+                            <textarea
+                                className={inputCls(field) + ' resize-none'}
+                                rows={3}
+                                value={form[field]}
+                                onChange={set(field)}
+                            />
+                        ) : (
+                            <input
+                                className={inputCls(field)}
+                                value={form[field]}
+                                onChange={set(field)}
+                            />
+                        )}
+                        {errors[field] && (
+                            <p className="flex items-center gap-1 text-red-500 text-xs mt-1">
+                                <AlertCircle size={11} /> {errors[field]}
+                            </p>
+                        )}
+                    </>
                 ) : (
                     <p className="text-sm text-slate-800 break-words">{value || <span className="text-slate-300 italic">—</span>}</p>
                 )}
@@ -73,7 +114,6 @@ export default function EventDetailModal({ event, onClose, onSave }) {
     );
 
     return (
-        /* Backdrop */
         <div
             className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm"
             onClick={onClose}
@@ -86,11 +126,19 @@ export default function EventDetailModal({ event, onClose, onSave }) {
                 <div className="flex items-start justify-between p-5 border-b border-slate-100">
                     <div className="flex-1 min-w-0 pr-4">
                         {editing ? (
-                            <input
-                                className="w-full text-lg font-bold text-slate-900 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                value={form.title}
-                                onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
-                            />
+                            <div>
+                                <input
+                                    className={inputCls('title') + ' text-lg font-bold'}
+                                    placeholder="Event title *"
+                                    value={form.title}
+                                    onChange={set('title')}
+                                />
+                                {errors.title && (
+                                    <p className="flex items-center gap-1 text-red-500 text-xs mt-1">
+                                        <AlertCircle size={11} /> {errors.title}
+                                    </p>
+                                )}
+                            </div>
                         ) : (
                             <h2 className="text-lg font-bold text-slate-900 leading-tight">{form.title}</h2>
                         )}
@@ -130,7 +178,8 @@ export default function EventDetailModal({ event, onClose, onSave }) {
                 {/* Body */}
                 <div className="flex-1 overflow-y-auto px-5 py-2">
                     <Field icon={Calendar} label="Date" value={`Day ${form.date}`} field={null} />
-                    <Field icon={Clock} label="Time" value={form.time + (form.endTime ? ` – ${form.endTime}` : '')} field="time" />
+                    <Field icon={Clock} label="Start Time" value={form.time} field="time" />
+                    <Field icon={Clock} label="End Time" value={form.endTime} field="endTime" />
                     <Field icon={MapPin} label="Location" value={form.location} field="location" />
                     <Field icon={User} label="Host" value={form.host} field="host" />
                     <Field icon={DollarSign} label="Cost" value={form.cost} field="cost" />
@@ -147,7 +196,7 @@ export default function EventDetailModal({ event, onClose, onSave }) {
                 {editing && (
                     <div className="px-5 py-3 border-t border-slate-100 flex justify-end gap-2">
                         <button
-                            onClick={() => { setEditing(false); }}
+                            onClick={() => { setEditing(false); setErrors({}); }}
                             className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 rounded-lg transition-colors"
                         >
                             Cancel
