@@ -12,7 +12,7 @@ export default function Sidebar({ currentView, onViewChange, onLogout }) {
         <div className="fixed bottom-0 left-0 right-0 h-16 w-full md:relative md:w-20 md:h-screen border-t md:border-t-0 md:border-r border-slate-200 bg-white flex flex-row md:flex-col items-center justify-between md:py-6 px-4 md:px-0 flex-shrink-0 z-50 md:z-10 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] md:shadow-sm">
             {/* Logo area - Hidden on mobile, shown on desktop */}
             <div className="hidden md:flex flex-col items-center gap-8 w-full">
-                <div className="w-8 h-8 bg-blue-600 rounded-lg flex-shrink-0 shadow-sm" />
+                <img src="/icon-192.png" alt="instaparse" className="w-8 h-8 rounded-lg shadow-sm flex-shrink-0" />
             </div>
 
             {/* Navigation Options - Centered on desktop, full width flex-row on mobile */}

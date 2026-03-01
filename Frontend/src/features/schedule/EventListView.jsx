@@ -1,16 +1,22 @@
-import React from 'react';
-import { Calendar as CalendarIcon, Clock, MapPin, Tag } from 'lucide-react';
+import React, { useState } from 'react';
+import { Calendar as CalendarIcon, MapPin, Tag } from 'lucide-react';
+import EventDetailModal from '../../components/EventDetailModal';
 
-export default function EventListView({ events }) {
+export default function EventListView({ events, onUpdateEvent }) {
+    const [selectedEvent, setSelectedEvent] = useState(null);
+
     // Sort events by date ascending
     const sortedEvents = [...events].sort((a, b) => a.date - b.date);
+
+    const today = new Date();
+    const monthLabel = today.toLocaleString('default', { month: 'long', year: 'numeric' });
 
     return (
         <div className="h-full w-full p-4 md:p-8 flex flex-col gap-4 md:gap-6 bg-slate-50 text-slate-900 overflow-hidden">
             <header className="flex flex-col sm:flex-row justify-between items-start sm:items-end border-b border-slate-200 pb-4 shrink-0 gap-4 sm:gap-0">
                 <div>
                     <h2 className="text-2xl font-bold tracking-tight">Events List</h2>
-                    <p className="text-slate-500 text-sm font-mono mt-1">September 2026</p>
+                    <p className="text-slate-500 text-sm font-mono mt-1">{monthLabel}</p>
                 </div>
             </header>
 
@@ -22,29 +28,39 @@ export default function EventListView({ events }) {
                     </div>
                 ) : (
                     sortedEvents.map(event => (
-                        <div key={event.id} className="bg-white border border-slate-200 rounded-xl p-4 md:p-6 shadow-sm flex flex-col md:flex-row gap-4 hover:border-slate-300 hover:shadow-md transition-all">
-                            {/* Left column: Date prominently displayed */}
+                        <div
+                            key={event.id}
+                            onClick={() => setSelectedEvent(event)}
+                            className="bg-white border border-slate-200 rounded-xl p-4 md:p-6 shadow-sm flex flex-col md:flex-row gap-4 hover:border-blue-300 hover:shadow-md transition-all cursor-pointer active:scale-[0.99]"
+                        >
+                            {/* Left column: Date */}
                             <div className="flex flex-row md:flex-col items-center justify-between md:justify-center border-b md:border-b-0 md:border-r border-slate-100 pb-3 md:pb-0 md:pr-6 shrink-0 w-full md:w-32">
-                                <span className="text-xs font-semibold text-slate-500 uppercase tracking-widest hidden md:block">SEP</span>
+                                <span className="text-xs font-semibold text-slate-500 uppercase tracking-widest hidden md:block">
+                                    {today.toLocaleString('default', { month: 'short' }).toUpperCase()}
+                                </span>
                                 <div className="flex md:flex-col items-baseline gap-1 md:gap-0">
-                                    <span className="text-sm font-semibold text-slate-500 uppercase md:hidden mr-1">SEP</span>
+                                    <span className="text-sm font-semibold text-slate-500 uppercase md:hidden mr-1">
+                                        {today.toLocaleString('default', { month: 'short' }).toUpperCase()}
+                                    </span>
                                     <span className="text-2xl md:text-4xl font-bold text-slate-900 leading-none">{event.date}</span>
                                 </div>
                                 <span className="text-xs font-medium text-slate-500 bg-slate-100 px-2 py-1 rounded-md md:mt-2">{event.time}</span>
                             </div>
 
-                            {/* Right column: Event Details */}
+                            {/* Right column */}
                             <div className="flex-1 flex flex-col justify-center gap-2">
                                 <div className="flex items-start justify-between gap-4">
                                     <h3 className="text-lg font-bold text-slate-900 leading-tight">{event.title}</h3>
-                                    {event.type && (
-                                        <span className="shrink-0 bg-blue-50 text-blue-700 border border-blue-100 px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider">
-                                            {event.type}
-                                        </span>
-                                    )}
+                                    <div className="flex items-center gap-2 shrink-0">
+                                        {event.type && (
+                                            <span className="bg-blue-50 text-blue-700 border border-blue-100 px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider">
+                                                {event.type}
+                                            </span>
+                                        )}
+                                        <span className="text-[10px] text-slate-400 font-mono hidden md:block">tap to view →</span>
+                                    </div>
                                 </div>
 
-                                {/* Render extra details from fullData if available (from the human verification step) */}
                                 {(event.fullData?.location || event.fullData?.host) && (
                                     <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm text-slate-600 mt-1">
                                         {event.fullData.location && (
@@ -66,6 +82,17 @@ export default function EventListView({ events }) {
                     ))
                 )}
             </div>
+
+            {selectedEvent && (
+                <EventDetailModal
+                    event={selectedEvent}
+                    onClose={() => setSelectedEvent(null)}
+                    onSave={(updated) => {
+                        if (onUpdateEvent) onUpdateEvent(updated);
+                        setSelectedEvent(null);
+                    }}
+                />
+            )}
         </div>
     );
 }

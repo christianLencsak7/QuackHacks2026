@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import EventDetailModal from '../../components/EventDetailModal';
 
 const DAYS_OF_WEEK = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-export default function ScheduleView({ events = [] }) {
+export default function ScheduleView({ events = [], onUpdateEvent }) {
     const today = new Date();
     const [viewDate, setViewDate] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
+    const [selectedEvent, setSelectedEvent] = useState(null);
 
     const year = viewDate.getFullYear();
     const month = viewDate.getMonth(); // 0-indexed
@@ -104,6 +106,7 @@ export default function ScheduleView({ events = [] }) {
                                 {day.events.map(event => (
                                     <div
                                         key={event.id}
+                                        onClick={(e) => { e.stopPropagation(); setSelectedEvent(event); }}
                                         className="text-[9px] md:text-xs p-1 md:px-2 md:py-1 rounded bg-blue-50 border border-blue-100 text-blue-700 truncate font-medium flex items-center gap-1 cursor-pointer hover:bg-blue-100 hover:border-blue-200 transition-colors"
                                         title={`${event.time} - ${event.title}`}
                                     >
@@ -117,6 +120,17 @@ export default function ScheduleView({ events = [] }) {
                     ))}
                 </div>
             </div>
+
+            {selectedEvent && (
+                <EventDetailModal
+                    event={selectedEvent}
+                    onClose={() => setSelectedEvent(null)}
+                    onSave={(updated) => {
+                        if (onUpdateEvent) onUpdateEvent(updated);
+                        setSelectedEvent(null);
+                    }}
+                />
+            )}
         </div>
     );
 }

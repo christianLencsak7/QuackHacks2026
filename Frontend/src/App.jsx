@@ -117,6 +117,10 @@ function App() {
     setCurrentView('capture');
   };
 
+  const handleUpdateEvent = (updatedEvent) => {
+    setEvents(prev => prev.map(e => e.id === updatedEvent.id ? updatedEvent : e));
+  };
+
   return (
     <div className="flex flex-col md:flex-row h-screen w-full bg-slate-50 text-slate-900 font-sans overflow-hidden">
       <Sidebar
@@ -139,8 +143,8 @@ function App() {
             onCancel={handleCancelVerification}
           />
         )}
-        {currentView === 'schedule' && <ScheduleView events={events} />}
-        {currentView === 'list' && <EventListView events={events} />}
+        {currentView === 'schedule' && <ScheduleView events={events} onUpdateEvent={handleUpdateEvent} />}
+        {currentView === 'list' && <EventListView events={events} onUpdateEvent={handleUpdateEvent} />}
       </main>
     </div>
   );
