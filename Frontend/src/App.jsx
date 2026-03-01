@@ -5,7 +5,28 @@ import CaptureView from './features/capture/CaptureView';
 import ScheduleView from './features/schedule/ScheduleView';
 import EventVerificationView from './features/verification/EventVerificationView';
 import EventListView from './features/schedule/EventListView';
-import { get, del } from 'idb-keyval';
+
+// Read and delete the shared image from native IndexedDB (written by sw.js)
+function getAndClearSharedImage() {
+  return new Promise((resolve) => {
+    const req = indexedDB.open('instaparse-share', 1);
+    req.onupgradeneeded = (e) => e.target.result.createObjectStore('images');
+    req.onsuccess = (e) => {
+      const db = e.target.result;
+      const tx = db.transaction('images', 'readwrite');
+      const store = tx.objectStore('images');
+      const getReq = store.get('shared-image');
+      getReq.onsuccess = () => {
+        const file = getReq.result;
+        if (file) store.delete('shared-image');
+        resolve(file || null);
+      };
+      getReq.onerror = () => resolve(null);
+    };
+    req.onerror = () => resolve(null);
+  });
+}
+
 
 // Initial Mock Events Lifted from ScheduleView
 const INITIAL_EVENTS = [
@@ -29,9 +50,8 @@ function App() {
 
     const checkSharedImage = async () => {
       try {
-        const file = await get('shared-image');
+        const file = await getAndClearSharedImage();
         if (file) {
-          await del('shared-image');
           setSharedFile(file);
           setCurrentView('capture');
         }
@@ -42,6 +62,7 @@ function App() {
 
     checkSharedImage();
   }, [isAuthenticated]);
+
 
   if (!isAuthenticated) {
     return <AuthPage onLogin={() => setIsAuthenticated(true)} />;
