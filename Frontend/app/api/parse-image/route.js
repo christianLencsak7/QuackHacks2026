@@ -1,29 +1,18 @@
 import { GoogleGenAI } from '@google/genai';
+import { NextResponse } from 'next/server';
 
-export const config = {
-    api: {
-        bodyParser: {
-            sizeLimit: '20mb',
-        },
-    },
-};
-
-export default async function handler(req, res) {
-    if (req.method !== 'POST') {
-        return res.status(405).json({ error: 'Method not allowed. Use POST.' });
-    }
-
+export async function POST(request) {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
         console.error('[parse-image] GEMINI_API_KEY is not set');
-        return res.status(500).json({ error: 'Server misconfiguration: GEMINI_API_KEY not set.' });
+        return NextResponse.json({ error: 'Server misconfiguration: GEMINI_API_KEY not set.' }, { status: 500 });
     }
 
     try {
-        const { imageBase64, mimeType } = req.body;
+        const { imageBase64, mimeType } = await request.json();
 
         if (!imageBase64) {
-            return res.status(400).json({ error: 'imageBase64 is required in the request body.' });
+            return NextResponse.json({ error: 'imageBase64 is required in the request body.' }, { status: 400 });
         }
 
         console.log(`[parse-image] Received image: mimeType=${mimeType}, base64Length=${imageBase64.length}`);
@@ -32,11 +21,13 @@ export default async function handler(req, res) {
 
         const prompt = `You are an expert event detail extractor. Look at this screenshot and extract any event information you can find.
 
+IMPORTANT: The current year is 2026. If a date is shown without a year, assume 2026. If a date shows only a month and day (e.g. "March 15" or "3/15"), format it as 2026-MM-DD.
+
 Return ONLY a valid JSON object with exactly these fields (use null for any field not found):
 {
   "title": "String - name of the event",
-  "startDate": "YYYY-MM-DD or null",
-  "endDate": "YYYY-MM-DD or null",
+  "startDate": "YYYY-MM-DD format, default year 2026 if unclear, or null if no date found",
+  "endDate": "YYYY-MM-DD format, default year 2026 if unclear, or null",
   "startTime": "HH:MM in 24hr format or null",
   "endTime": "HH:MM in 24hr format or null",
   "location": "String or null",
@@ -93,22 +84,22 @@ Do not wrap the JSON in markdown code blocks. Return raw JSON only.`;
             parsedData = JSON.parse(cleaned);
         } catch (parseErr) {
             console.error('[parse-image] JSON parse failed. Raw text was:', rawText);
-            return res.status(500).json({
+            return NextResponse.json({
                 error: 'Gemini returned non-JSON output',
                 raw: rawText,
                 details: parseErr.message
-            });
+            }, { status: 500 });
         }
 
         console.log('[parse-image] Parsed data:', JSON.stringify(parsedData));
-        return res.status(200).json(parsedData);
+        return NextResponse.json(parsedData, { status: 200 });
 
     } catch (error) {
         console.error('[parse-image] Error:', error?.message, error?.status, error?.errorDetails);
-        return res.status(500).json({
+        return NextResponse.json({
             error: 'Failed to process AI request',
             details: error.message,
             status: error.status ?? null,
-        });
+        }, { status: 500 });
     }
 }

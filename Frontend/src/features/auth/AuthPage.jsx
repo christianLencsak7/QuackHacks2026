@@ -19,7 +19,7 @@ export default function AuthPage({ onLogin }) {
         }
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
 
         const newErrors = {};
@@ -42,7 +42,28 @@ export default function AuthPage({ onLogin }) {
             return;
         }
 
-        onLogin(formData);
+        try {
+            const endpoint = isLogin ? '/api/auth/login' : '/api/auth/signup';
+            const res = await fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    email: formData.email,
+                    password: formData.password,
+                    // Can pass firstName/lastName here later if we add them to profiles table
+                })
+            });
+            const data = await res.json();
+
+            if (!res.ok) {
+                setErrors({ auth: data.error || 'Authentication failed' });
+                return;
+            }
+
+            onLogin(data.user);
+        } catch (err) {
+            setErrors({ auth: 'Network error. Please try again.' });
+        }
     };
 
     return (
@@ -56,6 +77,12 @@ export default function AuthPage({ onLogin }) {
                     <p className="text-slate-500 text-sm">
                         {isLogin ? 'Sign in to your account' : 'Create a new account'}
                     </p>
+                    {errors.auth && (
+                        <div className="mt-4 p-3 bg-red-50 border border-red-100 text-red-600 text-sm rounded-lg flex items-center gap-2">
+                            <Info size={16} />
+                            {errors.auth}
+                        </div>
+                    )}
                 </div>
 
                 <form className="flex flex-col gap-5" onSubmit={handleSubmit} noValidate>

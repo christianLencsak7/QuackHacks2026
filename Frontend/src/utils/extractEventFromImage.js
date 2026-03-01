@@ -36,7 +36,29 @@ export async function extractEventFromImage(imageFile) {
 
                 console.log('[extract] ✅ Parsed data:', data);
                 const screenshotUrl = URL.createObjectURL(imageFile);
-                resolve({ ...data, screenshotUrl });
+
+                // Normalize dates: ensure year is 2026, fix partial dates.
+                const normalizeDate = (raw) => {
+                    if (!raw) return null;
+                    const str = String(raw).trim();
+                    // Full YYYY-MM-DD — just fix the year to 2026
+                    const full = str.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+                    if (full) return `2026-${full[2]}-${full[3]}`;
+                    // MM-DD or M-D
+                    const short = str.match(/^(\d{1,2})-(\d{1,2})$/);
+                    if (short) return `2026-${String(short[1]).padStart(2, '0')}-${String(short[2]).padStart(2, '0')}`;
+                    // MM/DD or M/D
+                    const slash = str.match(/^(\d{1,2})\/(\d{1,2})$/);
+                    if (slash) return `2026-${String(slash[1]).padStart(2, '0')}-${String(slash[2]).padStart(2, '0')}`;
+                    return null; // unrecognizable, drop it
+                };
+
+                resolve({
+                    ...data,
+                    startDate: normalizeDate(data.startDate),
+                    endDate: normalizeDate(data.endDate),
+                    screenshotUrl,
+                });
             } catch (err) {
                 console.error('[extract] ❌ Fetch/parse error:', err);
                 reject(err);
