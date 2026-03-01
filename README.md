@@ -1,7 +1,7 @@
 # Rally
 
 ## Team Name
-QuackHacks 2026 Team
+Team Rally
 
 ## Team Members
 Andrew Tarnoski, Christian Lencsak, Kieran Seidita, Marcus Hom
