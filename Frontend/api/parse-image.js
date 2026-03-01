@@ -49,7 +49,7 @@ Return ONLY a valid JSON object with exactly these fields (use null for any fiel
 Do not wrap the JSON in markdown code blocks. Return raw JSON only.`;
 
         const response = await ai.models.generateContent({
-            model: 'gemini-2.0-flash-exp',
+            model: 'gemini-3-flash-preview',
             contents: [
                 {
                     role: 'user',
