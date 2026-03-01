@@ -1,29 +1,18 @@
 import { GoogleGenAI } from '@google/genai';
+import { NextResponse } from 'next/server';
 
-export const config = {
-    api: {
-        bodyParser: {
-            sizeLimit: '20mb',
-        },
-    },
-};
-
-export default async function handler(req, res) {
-    if (req.method !== 'POST') {
-        return res.status(405).json({ error: 'Method not allowed. Use POST.' });
-    }
-
+export async function POST(request) {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
         console.error('[parse-image] GEMINI_API_KEY is not set');
-        return res.status(500).json({ error: 'Server misconfiguration: GEMINI_API_KEY not set.' });
+        return NextResponse.json({ error: 'Server misconfiguration: GEMINI_API_KEY not set.' }, { status: 500 });
     }
 
     try {
-        const { imageBase64, mimeType } = req.body;
+        const { imageBase64, mimeType } = await request.json();
 
         if (!imageBase64) {
-            return res.status(400).json({ error: 'imageBase64 is required in the request body.' });
+            return NextResponse.json({ error: 'imageBase64 is required in the request body.' }, { status: 400 });
         }
 
         console.log(`[parse-image] Received image: mimeType=${mimeType}, base64Length=${imageBase64.length}`);
@@ -93,22 +82,22 @@ Do not wrap the JSON in markdown code blocks. Return raw JSON only.`;
             parsedData = JSON.parse(cleaned);
         } catch (parseErr) {
             console.error('[parse-image] JSON parse failed. Raw text was:', rawText);
-            return res.status(500).json({
+            return NextResponse.json({
                 error: 'Gemini returned non-JSON output',
                 raw: rawText,
                 details: parseErr.message
-            });
+            }, { status: 500 });
         }
 
         console.log('[parse-image] Parsed data:', JSON.stringify(parsedData));
-        return res.status(200).json(parsedData);
+        return NextResponse.json(parsedData, { status: 200 });
 
     } catch (error) {
         console.error('[parse-image] Error:', error?.message, error?.status, error?.errorDetails);
-        return res.status(500).json({
+        return NextResponse.json({
             error: 'Failed to process AI request',
             details: error.message,
             status: error.status ?? null,
-        });
+        }, { status: 500 });
     }
 }

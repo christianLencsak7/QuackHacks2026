@@ -10,6 +10,7 @@ export default function EventDetailModal({ event, onClose, onSave }) {
             setForm({
                 title: event.title || '',
                 date: event.date || '',
+                startDate: event.start_date || event.fullData?.start_date || '',
                 time: event.time || '',
                 endTime: event.fullData?.endTime || '',
                 location: event.fullData?.location || '',
@@ -19,7 +20,7 @@ export default function EventDetailModal({ event, onClose, onSave }) {
                 typeTags: event.fullData?.typeTags || [],
                 type: event.type || '',
             });
-            setEditing(false);
+            setEditing(event.isNew || false);
             setErrors({});
         }
     }, [event]);
@@ -138,9 +139,9 @@ export default function EventDetailModal({ event, onClose, onSave }) {
 
                 {/* Body */}
                 <div className="flex-1 overflow-y-auto px-5 py-2">
-                    <Field form={form} editing={editing} errors={errors} set={set} icon={Calendar} label="Date" value={`Day ${form.date}`} field={null} />
-                    <Field form={form} editing={editing} errors={errors} set={set} icon={Clock} label="Start Time" value={form.time} field="time" />
-                    <Field form={form} editing={editing} errors={errors} set={set} icon={Clock} label="End Time" value={form.endTime} field="endTime" />
+                    <Field form={form} editing={editing} errors={errors} set={set} icon={Calendar} label="Date" value={editing ? form.startDate : (form.startDate ? new Date(`${form.startDate}T12:00:00`).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }) : '')} field="startDate" inputType="date" />
+                    <Field form={form} editing={editing} errors={errors} set={set} icon={Clock} label="Start Time" value={form.time} field="time" inputType="time" />
+                    <Field form={form} editing={editing} errors={errors} set={set} icon={Clock} label="End Time" value={form.endTime} field="endTime" inputType="time" />
                     <Field form={form} editing={editing} errors={errors} set={set} icon={MapPin} label="Location" value={form.location} field="location" />
                     <Field form={form} editing={editing} errors={errors} set={set} icon={User} label="Host" value={form.host} field="host" />
                     <Field form={form} editing={editing} errors={errors} set={set} icon={DollarSign} label="Cost" value={form.cost} field="cost" />
@@ -169,6 +170,49 @@ export default function EventDetailModal({ event, onClose, onSave }) {
                         >
                             Save Changes
                         </button>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
+
+function Field({ form, editing, errors, set, icon: Icon, label, value, field, multiline = false, inputType = "text" }) {
+    return (
+        <div className="flex gap-3 mb-4 last:mb-0">
+            <div className="mt-0.5 min-w-[20px] text-slate-400">
+                {Icon && <Icon size={18} />}
+            </div>
+            <div className="flex-1 min-w-0">
+                <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1 px-1">
+                    {label}
+                </div>
+                {editing && field ? (
+                    <div>
+                        {multiline ? (
+                            <textarea
+                                className={`w-full text-sm text-slate-900 bg-slate-50 border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 min-h-[80px] resize-y ${errors[field] ? 'border-red-400 focus:ring-red-300' : 'border-slate-200 focus:ring-blue-500'}`}
+                                value={value}
+                                onChange={set(field)}
+                            />
+                        ) : (
+                            <input
+                                type={inputType}
+                                className={`w-full text-sm text-slate-900 bg-slate-50 border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 ${errors[field] ? 'border-red-400 focus:ring-red-300' : 'border-slate-200 focus:ring-blue-500'}`}
+                                value={value}
+                                onChange={set(field)}
+                            />
+                        )}
+                        {errors[field] && (
+                            <p className="flex items-center gap-1 text-red-500 text-[11px] mt-1 px-1">
+                                {/* Note: AlertCircle must be imported at the top of the file */}
+                                <AlertCircle size={10} /> {errors[field]}
+                            </p>
+                        )}
+                    </div>
+                ) : (
+                    <div className={multiline ? "text-sm text-slate-900 bg-slate-50 border border-slate-100 rounded-lg px-3 py-2 min-h-[38px] whitespace-pre-wrap break-words" : "text-sm text-slate-900 bg-slate-50 border border-slate-100 rounded-lg px-3 py-2 min-h-[38px] break-words"}>
+                        {value || <span className="text-slate-400 italic">Not specified</span>}
                     </div>
                 )}
             </div>

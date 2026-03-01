@@ -8,6 +8,8 @@ export default function ScheduleView({ events = [], onUpdateEvent }) {
     const today = new Date();
     const [viewDate, setViewDate] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
     const [selectedEvent, setSelectedEvent] = useState(null);
+    const [isCreating, setIsCreating] = useState(false);
+    const [createDate, setCreateDate] = useState(null);
 
     const year = viewDate.getFullYear();
     const month = viewDate.getMonth(); // 0-indexed
@@ -71,7 +73,7 @@ export default function ScheduleView({ events = [], onUpdateEvent }) {
                             <ChevronRight size={18} />
                         </button>
                     </div>
-                    <button className="bg-blue-600 text-white font-semibold px-4 py-1.5 md:py-2 text-sm hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 rounded-lg shadow-sm shrink-0">
+                    <button onClick={() => { setCreateDate(today); setIsCreating(true); }} className="bg-blue-600 text-white font-semibold px-4 py-1.5 md:py-2 text-sm hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 rounded-lg shadow-sm shrink-0">
                         <Plus size={16} />
                         <span className="hidden sm:inline">New Event</span>
                     </button>
@@ -94,7 +96,13 @@ export default function ScheduleView({ events = [], onUpdateEvent }) {
                     {calendarDays.map((day, i) => (
                         <div
                             key={i}
-                            className={`p-1 md:p-2 flex flex-col overflow-hidden bg-white transition-colors hover:bg-slate-50 cursor-default ${!day.isCurrentMonth ? 'text-slate-300 bg-slate-50/50' : 'text-slate-900'}`}
+                            onClick={() => {
+                                if (day.isCurrentMonth) {
+                                    setCreateDate(new Date(year, month, day.dayNumber));
+                                    setIsCreating(true);
+                                }
+                            }}
+                            className={`p-1 md:p-2 flex flex-col overflow-hidden bg-white transition-colors hover:bg-slate-50 ${day.isCurrentMonth ? 'cursor-pointer pointer-events-auto' : 'cursor-default pointer-events-none text-slate-300 bg-slate-50/50'} text-slate-900`}
                         >
                             <div className="flex justify-between items-start mb-1">
                                 <span className={`text-[10px] md:text-sm font-semibold w-5 h-5 md:w-7 md:h-7 flex items-center justify-center rounded-full ${day.isToday ? 'bg-blue-600 text-white shadow-sm' : ''}`}>
@@ -128,6 +136,30 @@ export default function ScheduleView({ events = [], onUpdateEvent }) {
                     onSave={(updated) => {
                         if (onUpdateEvent) onUpdateEvent(updated);
                         setSelectedEvent(null);
+                    }}
+                />
+            )}
+
+            {isCreating && (
+                <EventDetailModal
+                    event={{
+                        isNew: true,
+                        title: 'New Event',
+                        date: createDate ? createDate.getDate() : today.getDate(),
+                        start_date: createDate ? createDate.toISOString().split('T')[0] : today.toISOString().split('T')[0],
+                        start_time: '12:00',
+                        end_time: '13:00',
+                        location: '',
+                        event_type: 'Meeting'
+                    }}
+                    onClose={() => {
+                        setIsCreating(false);
+                        setCreateDate(null);
+                    }}
+                    onSave={(created) => {
+                        if (onUpdateEvent) onUpdateEvent(created);
+                        setIsCreating(false);
+                        setCreateDate(null);
                     }}
                 />
             )}

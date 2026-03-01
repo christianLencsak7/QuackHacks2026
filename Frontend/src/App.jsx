@@ -44,20 +44,12 @@ function getAndClearSharedImage() {
 
 
 
-// Initial Mock Events Lifted from ScheduleView
-const INITIAL_EVENTS = [
-  { id: 1, title: 'Q3 Planning Review', time: '14:00', type: 'meeting', date: 15 },
-  { id: 4, title: 'Team Sync', time: '10:00', type: 'meeting', date: 15 },
-  { id: 2, title: 'Dentist Appointment', time: '09:00', type: 'personal', date: 18 },
-  { id: 3, title: 'Flight NY to SF', time: '18:45', type: 'travel', date: 25 },
-  { id: 5, title: 'Product Launch', time: '08:00', type: 'milestone', date: 5 },
-];
-
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState(null);
+  const isAuthenticated = !!user;
   const [currentView, setCurrentView] = useState('capture');
   const [pendingEventData, setPendingEventData] = useState(null);
-  const [events, setEvents] = useState(INITIAL_EVENTS);
+  const [events, setEvents] = useState([]);
   const [sharedFile, setSharedFile] = useState(null);
 
   // On login, check if a file was shared via the Web Share Target
@@ -79,9 +71,19 @@ function App() {
     checkSharedImage();
   }, [isAuthenticated]);
 
+  // Fetch Events when user logs in
+  useEffect(() => {
+    if (!user) return;
+    fetch(`/api/events?user_id=${user.id}`)
+      .then(res => res.json())
+      .then(data => {
+        if (!data.error) setEvents(data);
+      })
+      .catch(console.error);
+  }, [user]);
 
   if (!isAuthenticated) {
-    return <AuthPage onLogin={() => setIsAuthenticated(true)} />;
+    return <AuthPage onLogin={setUser} />;
   }
 
   const handleExtractionComplete = (data) => {
@@ -90,24 +92,32 @@ function App() {
     setCurrentView('verification');
   };
 
-  const handleApproveEvent = (finalData) => {
-    // Convert YYYY-MM-DD into a simple day integer for the mock calendar
-    let parsedDay = 15; // default to today in our mock
-    if (finalData.startDate) {
-      const parts = finalData.startDate.split('-');
-      if (parts.length === 3) parsedDay = parseInt(parts[2], 10);
+  const handleApproveEvent = async (finalData) => {
+    try {
+      const res = await fetch('/api/create_event', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(finalData)
+      });
+      const data = await res.json();
+
+      if (data.event) {
+        // Map the newly returned DB event back to the frontend's expected shape
+        const newEvent = {
+          id: data.event.id,
+          title: data.event.title,
+          time: data.event.start_time,
+          type: data.event.event_type,
+          date: data.event.start_date ? parseInt(data.event.start_date.split('-')[2], 10) : null,
+          start_date: data.event.start_date,
+          fullData: finalData
+        };
+        setEvents(prev => [...prev, newEvent]);
+      }
+    } catch (err) {
+      console.error('Failed to save event:', err);
     }
 
-    const newEvent = {
-      id: Date.now(),
-      title: finalData.title || 'Untitled Event',
-      time: finalData.startTime || '12:00',
-      type: finalData.typeTags?.length > 0 ? finalData.typeTags[0] : 'other',
-      date: parsedDay,
-      fullData: finalData
-    };
-
-    setEvents(prev => [...prev, newEvent]);
     setPendingEventData(null);
     setCurrentView('schedule');
   };
@@ -118,6 +128,23 @@ function App() {
   };
 
   const handleUpdateEvent = (updatedEvent) => {
+    if (updatedEvent.isNew) {
+      // It's a brand new event created manually from the schedule
+      handleApproveEvent({
+        ...updatedEvent.fullData,
+        title: updatedEvent.title,
+        start_date: updatedEvent.start_date || updatedEvent.date,
+        end_date: updatedEvent.end_date || updatedEvent.start_date || updatedEvent.date,
+        start_time: updatedEvent.time || updatedEvent.start_time,
+        end_time: updatedEvent.fullData?.endTime || updatedEvent.endTime || updatedEvent.end_time || '',
+        location: updatedEvent.fullData?.location || updatedEvent.location || '',
+        event_type: updatedEvent.type || updatedEvent.event_type || 'Custom'
+      });
+      return;
+    }
+
+    // Otherwise it's just an edit to an existing frontend state event.
+    // Ideally this should trigger a DB update too, but sticking to existing logic for now.
     setEvents(prev => prev.map(e => e.id === updatedEvent.id ? updatedEvent : e));
   };
 
@@ -126,7 +153,7 @@ function App() {
       <Sidebar
         currentView={currentView}
         onViewChange={setCurrentView}
-        onLogout={() => setIsAuthenticated(false)}
+        onLogout={() => setUser(null)}
       />
       <main className="flex-1 relative h-full flex flex-col min-w-0 pb-16 md:pb-0">
         <div className="absolute inset-0 pointer-events-none border-l border-slate-200" />
