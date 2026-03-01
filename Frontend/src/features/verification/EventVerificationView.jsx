@@ -55,21 +55,21 @@ export default function EventVerificationView({ initialData, onApprove, onCancel
 
     return (
         <div className="h-full w-full flex flex-col bg-slate-50 text-slate-900 overflow-hidden relative pb-16 md:pb-0">
-            <header className="flex-shrink-0 border-b border-slate-200 bg-white p-6 md:px-8 flex items-center justify-between z-10 shadow-sm">
+            <header className="flex-shrink-0 border-b border-slate-200 bg-white p-6 md:px-8 flex flex-col items-center justify-center text-center gap-4 z-10 shadow-sm">
                 <div>
-                    <h2 className="text-2xl font-bold tracking-tight text-slate-900">Verify Event Details</h2>
+                    <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900">Verify Event Details</h2>
                     <p className="text-slate-500 text-sm mt-1">Please review the extracted information before adding to schedule.</p>
                 </div>
                 <div className="flex gap-3">
                     <button
                         onClick={onCancel}
-                        className="px-4 py-2 flex items-center gap-2 text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors font-medium text-sm"
+                        className="px-6 py-2.5 flex items-center gap-2 text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 rounded-full transition-colors font-semibold text-sm"
                     >
                         <X size={16} /> Cancel
                     </button>
                     <button
                         onClick={() => onApprove(formData)}
-                        className="px-4 py-2 flex items-center gap-2 text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors font-medium text-sm shadow-sm"
+                        className="px-6 py-2.5 flex items-center gap-2 text-white bg-blue-600 hover:bg-blue-700 rounded-full transition-colors font-semibold text-sm shadow-sm"
                     >
                         <Check size={16} /> Approve
                     </button>
@@ -178,8 +178,8 @@ export default function EventVerificationView({ initialData, onApprove, onCancel
                                                 key={tag}
                                                 onClick={() => togglePresetTag(tag)}
                                                 className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${isSelected
-                                                        ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
-                                                        : 'bg-white text-slate-600 border-slate-200 hover:border-blue-300 hover:bg-blue-50'
+                                                    ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                                                    : 'bg-white text-slate-600 border-slate-200 hover:border-blue-300 hover:bg-blue-50'
                                                     }`}
                                             >
                                                 {tag}

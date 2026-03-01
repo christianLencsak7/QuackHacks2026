@@ -1,16 +1,7 @@
 import React from 'react';
 import { Calendar as CalendarIcon, Clock, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 
-export default function ScheduleView() {
-    // A realistic set of events for the calendar.
-    const events = [
-        { id: 1, title: 'Q3 Planning Review', time: '14:00', type: 'meeting', date: 15 },
-        { id: 4, title: 'Team Sync', time: '10:00', type: 'meeting', date: 15 },
-        { id: 2, title: 'Dentist Appointment', time: '09:00', type: 'personal', date: 18 },
-        { id: 3, title: 'Flight NY to SF', time: '18:45', type: 'travel', date: 25 },
-        { id: 5, title: 'Product Launch', time: '08:00', type: 'milestone', date: 5 },
-    ];
-
+export default function ScheduleView({ events }) {
     const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
     // Create 35 calendar day cells (5 weeks)
