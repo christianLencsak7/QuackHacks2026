@@ -37,7 +37,7 @@ Rally helps turn:
 - “That looks fun” → “We actually went”
 - Online inspiration → Real-life experiences
 
-Stop scrolling. Start living.
+Rally your friends. Stop scrolling. Start living.
 
 ## Technologies Used
 - **Frontend / Fullstack:** React, Next.js, Node.js, Tailwind CSS
