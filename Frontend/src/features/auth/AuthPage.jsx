@@ -72,7 +72,7 @@ export default function AuthPage({ onLogin }) {
                 <div className="mb-8">
                     <div className="flex items-center gap-2 mb-2">
                         <div className="w-4 h-4 bg-blue-600 rounded-[3px] shadow-sm" />
-                        <h1 className="text-2xl font-bold font-mono tracking-tighter text-slate-900">InstaParse</h1>
+                        <h1 className="text-2xl font-bold font-mono tracking-tighter text-slate-900">Rally</h1>
                     </div>
                     <p className="text-slate-500 text-sm">
                         {isLogin ? 'Sign in to your account' : 'Create a new account'}

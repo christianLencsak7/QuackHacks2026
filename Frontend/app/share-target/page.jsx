@@ -15,7 +15,7 @@ import { useRouter } from 'next/navigation';
 
 function saveImageToIDB(file) {
     return new Promise((resolve, reject) => {
-        const req = indexedDB.open('instaparse-share', 1);
+        const req = indexedDB.open('rally-share', 1);
         req.onupgradeneeded = (e) => e.target.result.createObjectStore('images');
         req.onsuccess = (e) => {
             const db = e.target.result;

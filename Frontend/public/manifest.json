@@ -1,6 +1,6 @@
 {
-    "name": "instaparse",
-    "short_name": "instaparse",
+    "name": "Rally",
+    "short_name": "Rally",
     "description": "Verify and schedule events from screenshots",
     "start_url": "/",
     "display": "standalone",

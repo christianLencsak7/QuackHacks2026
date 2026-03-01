@@ -2,7 +2,7 @@ import './globals.css';
 import ServiceWorkerRegistration from './ServiceWorkerRegistration';
 
 export const metadata = {
-    title: 'instaparse',
+    title: 'Rally',
     description: 'Schedule quickly.',
     manifest: '/manifest.json',
     themeColor: '#ffffff',

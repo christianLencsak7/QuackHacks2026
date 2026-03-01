@@ -1,4 +1,4 @@
-# Instaparse Next.js Application
+# Rally Next.js Application
 
 This project is a full-stack Next.js application that provides event scheduling and parsing functionality. It uses App Router, Tailwind CSS v4, and integrates with Supabase for data persistence and authentication.
 

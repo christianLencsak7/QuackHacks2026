@@ -111,7 +111,7 @@ export default function EventVerificationView({ initialData, onApprove, onCancel
                                     value={formData.title}
                                     onChange={e => { handleChange(e); if (errors.title) setErrors(p => ({ ...p, title: null })); }}
                                     className={`w-full bg-slate-50 border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:border-transparent text-slate-900 font-medium text-lg placeholder-slate-400 ${errors.title ? 'border-red-400 focus:ring-red-300' : 'border-slate-200 focus:ring-blue-500'}`}
-                                    placeholder="e.g. QuackHacks 2026 Pitch"
+                                    placeholder="e.g. Rally Event"
                                 />
                                 {errors.title && <p className="flex items-center gap-1 text-red-500 text-xs mt-1"><AlertCircle size={12} /> {errors.title}</p>}
                             </div>

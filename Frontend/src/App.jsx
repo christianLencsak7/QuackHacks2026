@@ -10,7 +10,7 @@ import EventListView from './features/schedule/EventListView';
 function getAndClearSharedImage() {
   console.log('[App] Checking IndexedDB for shared image...');
   return new Promise((resolve) => {
-    const req = indexedDB.open('instaparse-share', 1);
+    const req = indexedDB.open('rally-share', 1);
     req.onupgradeneeded = (e) => {
       console.log('[App] IndexedDB upgrade — creating images store');
       e.target.result.createObjectStore('images');

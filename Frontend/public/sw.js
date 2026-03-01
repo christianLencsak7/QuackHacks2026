@@ -22,7 +22,7 @@ self.addEventListener('activate', (event) => {
 function saveImageToIDB(file) {
     console.log('[SW] Saving file to IndexedDB:', file?.name, file?.size, 'bytes', file?.type);
     return new Promise((resolve, reject) => {
-        const request = indexedDB.open('instaparse-share', 1);
+        const request = indexedDB.open('rally-share', 1);
 
         request.onupgradeneeded = (e) => {
             console.log('[SW] IndexedDB upgrade needed — creating object store');
