@@ -1,13 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { UploadCloud, Image as ImageIcon, Terminal } from 'lucide-react';
+import { UploadCloud, Terminal } from 'lucide-react';
+import { extractEventFromImage } from '../../utils/extractEventFromImage';
 
-export default function CaptureView({ onExtractionComplete }) {
+export default function CaptureView({ onExtractionComplete, sharedFile }) {
     const [logs, setLogs] = useState([
         "> INITIALIZING SYSTEM...",
         "> AWAITING IMAGE INPUT_"
     ]);
     const [isDragActive, setIsDragActive] = useState(false);
+    const [isProcessing, setIsProcessing] = useState(false);
     const scrollRef = useRef(null);
+    const fileInputRef = useRef(null);
 
     // Auto-scroll log
     useEffect(() => {
@@ -16,54 +19,53 @@ export default function CaptureView({ onExtractionComplete }) {
         }
     }, [logs]);
 
-    // Mock processing function
-    const startMockExtraction = (e) => {
-        if (e) e.preventDefault();
+    // If a shared file was injected (from mobile share target), process it automatically
+    useEffect(() => {
+        if (sharedFile) {
+            processFile(sharedFile);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [sharedFile]);
+
+    const addLog = (msg) => setLogs(prev => [...prev, msg]);
+
+    const processFile = async (file) => {
+        if (isProcessing) return;
+        setIsProcessing(true);
         setIsDragActive(false);
 
-        setLogs(prev => [...prev, "> IMAGE DETECTED. ANALYZING IN 3..2..1.."]);
+        addLog(`> FILE RECEIVED: ${file.name || 'shared-image'}`);
+        addLog('> SENDING TO GEMINI AI...');
+        addLog('> EXTRACTING EVENT METADATA...');
 
-        // Simulate LLM extraction thinking
-        let step = 0;
-        const mockSteps = [
-            "> EXTRACTING METADATA...",
-            "> IDENTIFYING OBJECTS: [CALENDAR_EVENT, TIME_BLOCK]",
-            "> PARSING TEXT CONTENT...",
-            "> FOUND: 'Team Sync' @ 14:00 PST",
-            "> RUNNING RE-VALIDATION CHECK...",
-            "> EXTRACTION COMPLETE. READY."
-        ];
-
-        const interval = setInterval(() => {
-            setLogs(prev => [...prev, mockSteps[step]]);
-            step++;
-            if (step >= mockSteps.length) {
-                clearInterval(interval);
-                setTimeout(() => {
-                    const mockData = {
-                        title: 'Team Sync',
-                        startDate: new Date().toISOString().split('T')[0],
-                        endDate: new Date().toISOString().split('T')[0],
-                        startTime: '14:00',
-                        endTime: '16:00',
-                        location: 'Room 304',
-                        typeTags: ['Meeting', 'Work'],
-                        cost: 'Free',
-                        host: 'Manager',
-                        notes: 'Please review the slide deck beforehand.',
-                        screenshotUrl: 'https://images.unsplash.com/photo-1506784983877-45594efa4cbe?auto=format&fit=crop&q=80&w=400'
-                    };
-                    if (onExtractionComplete) {
-                        onExtractionComplete(mockData);
-                    }
-                }, 1000);
-            }
-        }, 800);
+        try {
+            const data = await extractEventFromImage(file);
+            addLog('> PARSING COMPLETE. VALIDATING...');
+            addLog('> EXTRACTION SUCCESSFUL. LOADING VERIFICATION VIEW.');
+            setTimeout(() => {
+                if (onExtractionComplete) onExtractionComplete(data);
+            }, 600);
+        } catch (err) {
+            addLog(`> ERROR: ${err.message}`);
+            addLog('> EXTRACTION FAILED. PLEASE TRY AGAIN.');
+            setIsProcessing(false);
+        }
     };
 
-    const handleDragOver = (e) => {
+    const handleDrop = (e) => {
         e.preventDefault();
-        setIsDragActive(true);
+        setIsDragActive(false);
+        const file = e.dataTransfer?.files?.[0];
+        if (file) processFile(file);
+    };
+
+    const handleFileChange = (e) => {
+        const file = e.target.files?.[0];
+        if (file) processFile(file);
+    };
+
+    const handleClick = () => {
+        if (!isProcessing) fileInputRef.current?.click();
     };
 
     return (
@@ -76,12 +78,16 @@ export default function CaptureView({ onExtractionComplete }) {
             </header>
 
             <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Dropzone Area (2/3 width on desktop) */}
+                {/* Dropzone Area */}
                 <div
-                    className={`lg:col-span-2 border-2 border-dashed rounded-xl ${isDragActive ? 'border-blue-500 bg-blue-50' : 'border-slate-300 bg-white'} flex flex-col items-center justify-center transition-colors relative cursor-pointer`}
-                    onClick={startMockExtraction}
-                    onDrop={startMockExtraction}
-                    onDragOver={handleDragOver}
+                    className={`lg:col-span-2 border-2 border-dashed rounded-xl transition-colors relative
+                        ${isProcessing ? 'border-blue-400 bg-blue-50 cursor-not-allowed' :
+                            isDragActive ? 'border-blue-500 bg-blue-50 cursor-copy' :
+                                'border-slate-300 bg-white cursor-pointer hover:border-blue-400 hover:bg-blue-50/50'
+                        } flex flex-col items-center justify-center`}
+                    onClick={handleClick}
+                    onDrop={handleDrop}
+                    onDragOver={(e) => { e.preventDefault(); setIsDragActive(true); }}
                     onDragLeave={() => setIsDragActive(false)}
                 >
                     <div className="absolute top-4 left-4 flex gap-2">
@@ -91,17 +97,38 @@ export default function CaptureView({ onExtractionComplete }) {
                     </div>
 
                     <div className="flex flex-col items-center gap-4 text-slate-400">
-                        <UploadCloud size={48} strokeWidth={1.5} className={isDragActive ? "text-blue-500" : "text-slate-400"} />
+                        <UploadCloud
+                            size={48}
+                            strokeWidth={1.5}
+                            className={`${isProcessing ? 'text-blue-400 animate-pulse' : isDragActive ? 'text-blue-500' : 'text-slate-400'} transition-colors`}
+                        />
                         <div className="text-center font-mono">
-                            <p className={`text-lg transition-colors font-semibold tracking-tight ${isDragActive ? 'text-blue-600' : 'text-slate-600'}`}>DRAG & DROP SCREENSHOT</p>
-                            <p className="text-xs uppercase tracking-widest mt-2 text-slate-400">or click to browse files</p>
+                            {isProcessing ? (
+                                <>
+                                    <p className="text-lg font-semibold tracking-tight text-blue-600">ANALYZING IMAGE...</p>
+                                    <p className="text-xs uppercase tracking-widest mt-2 text-slate-400">Gemini AI is extracting event details</p>
+                                </>
+                            ) : (
+                                <>
+                                    <p className={`text-lg transition-colors font-semibold tracking-tight ${isDragActive ? 'text-blue-600' : 'text-slate-600'}`}>
+                                        DRAG &amp; DROP SCREENSHOT
+                                    </p>
+                                    <p className="text-xs uppercase tracking-widest mt-2 text-slate-400">or click to browse files</p>
+                                </>
+                            )}
                         </div>
                     </div>
 
-                    <input type="file" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" title="" />
+                    <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleFileChange}
+                    />
                 </div>
 
-                {/* Real-time Extraction Log (1/3 width on desktop) */}
+                {/* Extraction Log */}
                 <div className="border border-slate-200 bg-white rounded-xl shadow-sm flex flex-col h-full overflow-hidden shrink-0 min-h-[300px]">
                     <div className="border-b border-slate-100 p-3 flex items-center gap-2 bg-slate-50">
                         <Terminal size={14} className="text-slate-500" />
@@ -123,3 +150,5 @@ export default function CaptureView({ onExtractionComplete }) {
         </div>
     );
 }
+
+
